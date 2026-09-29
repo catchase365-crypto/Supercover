@@ -282,24 +282,26 @@ is right.</textarea>
 
           <!-- Color Presets -->
           <div>
-            <span class="text-xs text-zinc-400 block mb-1.5">经典纸墨色系</span>
-            <div class="grid grid-cols-4 gap-1.5">
-              <button onclick="setPalette('#FFFFFF', '#050505')" class="p-2 rounded border border-zinc-700 bg-white hover:ring-2 hover:ring-white transition flex flex-col items-center">
-                <span class="text-xs font-black text-black">Aa</span>
-                <span class="text-[9px] text-zinc-600 font-mono">纯白</span>
-              </button>
-              <button onclick="setPalette('#F6F4EE', '#181816')" class="p-2 rounded border border-zinc-700 bg-[#F6F4EE] hover:ring-2 hover:ring-[#F6F4EE] transition flex flex-col items-center">
-                <span class="text-xs font-black text-[#181816]">Aa</span>
-                <span class="text-[9px] text-zinc-500 font-mono">米白纸</span>
-              </button>
-              <button onclick="setPalette('#0A0A0B', '#F5F5F7')" class="p-2 rounded border border-zinc-700 bg-[#0A0A0B] hover:ring-2 hover:ring-zinc-400 transition flex flex-col items-center">
-                <span class="text-xs font-black text-white">Aa</span>
-                <span class="text-[9px] text-zinc-400 font-mono">黑曜</span>
-              </button>
-              <button onclick="setPalette('#E53924', '#FFFFFF')" class="p-2 rounded border border-zinc-700 bg-[#E53924] hover:ring-2 hover:ring-[#E53924] transition flex flex-col items-center">
-                <span class="text-xs font-black text-white">Aa</span>
-                <span class="text-[9px] text-white/80 font-mono">包豪斯</span>
-              </button>
+            <span class="text-xs text-zinc-400 block mb-1.5">高级配色方案 (16种)</span>
+            <div class="grid grid-cols-4 gap-1.5 max-h-[140px] overflow-y-auto pr-1 mac-scrollbar">
+              <script>
+                const palettes = [
+                  {bg: '#FFFFFF', txt: '#050505', name: '纯白'}, {bg: '#F6F4EE', txt: '#181816', name: '米白'}, 
+                  {bg: '#0A0A0B', txt: '#F5F5F7', name: '黑曜'}, {bg: '#E53924', txt: '#FFFFFF', name: '包豪斯'}, 
+                  {bg: '#F8F9FA', txt: '#212529', name: '浅灰'}, {bg: '#FFF8E1', txt: '#5D4037', name: '牛皮'}, 
+                  {bg: '#E0F2F1', txt: '#004D40', name: '薄荷'}, {bg: '#F3E5F5', txt: '#4A148C', name: '薰衣'}, 
+                  {bg: '#1A237E', txt: '#FFFFFF', name: '海军'}, {bg: '#263238', txt: '#ECEFF1', name: '岩石'}, 
+                  {bg: '#FFF3E0', txt: '#E65100', name: '夕阳'}, {bg: '#E8F5E9', txt: '#1B5E20', name: '森绿'}, 
+                  {bg: '#FCE4EC', txt: '#880E4F', name: '樱花'}, {bg: '#121212', txt: '#FFD700', name: '暗金'}, 
+                  {bg: '#FDFCF0', txt: '#333333', name: '羊皮'}, {bg: '#DDE6ED', txt: '#27374D', name: '工业'}
+                ];
+                palettes.forEach(p => {
+                  document.write(`<button onclick="setPalette('${p.bg}', '${p.txt}')" class="p-1.5 rounded border border-zinc-800 hover:border-zinc-500 transition flex flex-col items-center" style="background:${p.bg}">
+                    <span class="text-[10px] font-black" style="color:${p.txt}">Aa</span>
+                    <span class="text-[9px] opacity-70 font-mono" style="color:${p.txt}">${p.name}</span>
+                  </button>`);
+                });
+              </script>
             </div>
           </div>
 
