@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Swiss Typo — 极简排版封面生成器 (Mac 深度适配版)</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Modern Clean Swiss Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Serif+SC:wght@300;400;600;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'sans-serif'],
+            mono: ['Space Mono', 'SF Mono', 'Menlo', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Strict viewport constraint for Mac Chrome & trackpads */
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
+    }
+
+    /* Elegant translucent Mac-style scrollbar */
+    .mac-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .mac-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .mac-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: 9999px;
+    }
+    .mac-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    /* Refined range slider */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: #27272a;
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #f4f4f5;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+    }
+
+    /* Notebook Spine Effect */
+    .notebook-spine {
+      box-shadow: inset 9px 0 14px -5px rgba(0,0,0,0.22);
+    }
+    .realistic-shadow {
+      box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+
+<body class="bg-[#0D0D0F] text-[#EDEDED] font-sans h-full flex flex-col select-none">
+
+  <!-- Top Navigation Header -->
+  <header class="h-12 border-b border-zinc-800/90 bg-[#131316] px-4 md:px-5 flex items-center justify-between flex-shrink-0 z-30">
+    <div class="flex items-center space-x-3">
+      <!-- Mac-inspired indicator dot -->
+      <div class="flex items-center space-x-1.5 mr-1">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#FF5F56] inline-block opacity-80"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] inline-block opacity-80"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-[#27C93F] inline-block opacity-80"></span>
+      </div>
+      <div class="h-4 w-px bg-zinc-700/60 mx-1"></div>
+      <span class="font-mono text-xs font-bold tracking-wider uppercase text-zinc-100">SWISS / COVER</span>
+      <span class="text-[11px] text-zinc-500 font-mono hidden sm:inline">| 极简排版封面工坊</span>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="flex items-center space-x-1.5 overflow-x-auto py-1">
+      <span class="text-[11px] text-zinc-400 font-mono mr-1 hidden lg:inline">预设版式:</span>
+      <button onclick="applyPreset('reference')" class="px-2.5 py-1 text-[11px] font-mono rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition">经典原版</button>
+      <button onclick="applyPreset('notebookA5')" class="px-2.5 py-1 text-[11px] font-mono rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition">日系手账</button>
+      <button onclick="applyPreset('notionArchive')" class="px-2.5 py-1 text-[11px] font-mono rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition">黑曜归档</button>
+      <button onclick="applyPreset('bauhausCrimson')" class="px-2.5 py-1 text-[11px] font-mono rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition">包豪斯朱红</button>
+    </div>
+  </header>
+
+  <!-- Main Workspace: Split into strictly bounded flex children -->
+  <div class="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden relative">
+
+    <!-- LEFT SIDEBAR: Fully scrollable controls with pinned bottom export -->
+    <aside class="w-full md:w-[390px] lg:w-[410px] bg-[#141417] border-r border-zinc-800/80 flex flex-col h-full min-h-0 flex-shrink-0 z-20">
+      
+      <!-- Scrollable parameters area with smooth scrolling -->
+      <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain mac-scrollbar p-4 lg:p-5 space-y-6 text-sm">
+        
+        <!-- 01 Text Input -->
+        <section class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="font-mono text-[11px] tracking-wider text-zinc-400 font-semibold uppercase">01 / 主文本 (支持换行断句)</label>
+            <button onclick="clearText()" class="text-[11px] text-zinc-500 hover:text-zinc-300 font-mono transition">清空</button>
+          </div>
+          <textarea id="mainText" rows="4" class="w-full bg-[#0E0E10] border border-zinc-700/70 rounded p-2.5 text-zinc-100 font-medium text-sm leading-snug focus:border-zinc-400 focus:outline-none transition resize-none placeholder-zinc-600" placeholder="在此输入标题文字...">In design,
+thinking
+wrong
+is right.</textarea>
+        </section>
+
+        <!-- 02 Micro Badge / Corner Text -->
+        <section class="space-y-2.5 pt-3 border-t border-zinc-800/80">
+          <label class="font-mono text-[11px] tracking-wider text-zinc-400 font-semibold uppercase">02 / 角标与微缩信息 (Corner Text)</label>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="cornerText" value="Base" class="w-full bg-[#0E0E10] border border-zinc-700/70 rounded px-2.5 py-1.5 text-zinc-100 text-xs font-mono focus:border-zinc-400 focus:outline-none" placeholder="如: Base / VOL.01">
+            <select id="cornerPosition" class="bg-[#0E0E10] border border-zinc-700/70 text-zinc-200 text-xs px-2 py-1.5 rounded focus:outline-none">
+              <option value="bottom-right" selected>右下角 (Bottom-R)</option>
+              <option value="bottom-left">左下角 (Bottom-L)</option>
+              <option value="top-right">右上角 (Top-R)</option>
+              <option value="top-left">左上角 (Top-L)</option>
+              <option value="none">关闭角标</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-between text-xs text-zinc-400">
+            <span>角标朝向:</span>
+            <div class="flex space-x-1.5 font-mono">
+              <button id="cornerRot_vertical" onclick="setCornerRotation('vertical')" class="px-2 py-1 rounded border border-zinc-600 bg-zinc-700 text-white text-[11px]">立式旋转 (-90°)</button>
+              <button id="cornerRot_horizontal" onclick="setCornerRotation('horizontal')" class="px-2 py-1 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 text-[11px]">普通水平</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 03 Ratio & Screen Orientation -->
+        <section class="space-y-3 pt-3 border-t border-zinc-800/80">
+          <div class="flex items-center justify-between">
+            <label class="font-mono text-[11px] tracking-wider text-zinc-400 font-semibold uppercase">03 / 画幅比例与横竖</label>
+            <span id="badgePixelSize" class="text-[11px] font-mono text-zinc-400 bg-zinc-800/70 px-1.5 py-0.5 rounded">600 × 800</span>
+          </div>
+
+          <!-- Ratio Buttons -->
+          <div class="grid grid-cols-3 gap-1.5 font-mono text-xs">
+            <button data-ratio="0.75" onclick="setRatio(0.75, this)" class="ratio-btn py-1.5 rounded bg-zinc-200 text-zinc-950 font-bold border border-zinc-300">3:4 (手账笔记)</button>
+            <button data-ratio="1.0" onclick="setRatio(1.0, this)" class="ratio-btn py-1.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 hover:border-zinc-600">1:1 (正方形)</button>
+            <button data-ratio="0.707" onclick="setRatio(0.707, this)" class="ratio-btn py-1.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 hover:border-zinc-600">A5/A4 (1:√2)</button>
+            <button data-ratio="0.667" onclick="setRatio(0.667, this)" class="ratio-btn py-1.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 hover:border-zinc-600">2:3 (经典比例)</button>
+            <button data-ratio="0.8" onclick="setRatio(0.8, this)" class="ratio-btn py-1.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 hover:border-zinc-600">4:5 (社交媒体)</button>
+            <button data-ratio="0.5625" onclick="setRatio(0.5625, this)" class="ratio-btn py-1.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 hover:border-zinc-600">9:16 (手机屏)</button>
+          </div>
+
+          <!-- Orientation and Target Pixel Class -->
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <div class="flex items-center space-x-1 bg-[#0E0E10] p-1 border border-zinc-800 rounded">
+              <button id="btnPortrait" onclick="setOrientation('portrait')" class="flex-1 py-1 text-xs rounded bg-zinc-700 text-white font-medium">竖版</button>
+              <button id="btnLandscape" onclick="setOrientation('landscape')" class="flex-1 py-1 text-xs rounded text-zinc-400 hover:text-white font-medium">横版</button>
+            </div>
+            
+            <select id="exportResolution" onchange="renderCanvas()" class="bg-[#0E0E10] border border-zinc-700/70 text-zinc-200 text-xs px-2 py-1 rounded focus:outline-none">
+              <option value="600" selected>极轻量封面 (600px · ~35KB)</option>
+              <option value="450">超轻量缩略图 (450px · ~18KB)</option>
+              <option value="850">标准封面 (850px · ~65KB)</option>
+              <option value="1200">高清印刷 (1200px · ~150KB)</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- 04 Typography Parameters -->
+        <section class="space-y-3.5 pt-3 border-t border-zinc-800/80">
+          <label class="font-mono text-[11px] tracking-wider text-zinc-400 font-semibold uppercase">04 / 瑞士字体与字距行距</label>
+
+          <!-- Font selector -->
+          <div>
+            <span class="text-xs text-zinc-400 block mb-1">字型方案 (Font)</span>
+            <select id="fontFamily" onchange="renderCanvas()" class="w-full bg-[#0E0E10] border border-zinc-700/70 text-zinc-200 text-xs px-2.5 py-1.5 rounded focus:outline-none">
+              <option value="Inter, sans-serif" selected>Inter (瑞士新无衬线 · 原版推荐)</option>
+              <option value="'Space Grotesk', sans-serif">Space Grotesk (粗砺几何冷感)</option>
+              <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (极简现代感)</option>
+              <option value="'Space Mono', monospace">Space Mono (打字机等宽体)</option>
+              <option value="'Noto Serif SC', serif">思源宋体 (Noto Serif SC 诗意文学)</option>
+              <option value="'Playfair Display', serif">Playfair Display (经典复古衬线)</option>
+              <option value="system-ui, -apple-system, sans-serif">Mac 默认系统苹方黑体</option>
+            </select>
+          </div>
+
+          <!-- Font Size Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-zinc-400">
+              <span>相对字号 (Font Size)</span>
+              <span id="fontSizeVal" class="font-mono text-zinc-200">105%</span>
+            </div>
+            <input type="range" id="fontSizeScale" min="30" max="230" value="105" class="w-full" oninput="updateRangeVal('fontSizeVal', this.value + '%'); renderCanvas()">
+          </div>
+
+          <!-- Font Weight Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-zinc-400">
+              <span>字重粗细 (Font Weight)</span>
+              <span id="fontWeightVal" class="font-mono text-zinc-200">900 (Ultra Black)</span>
+            </div>
+            <input type="range" id="fontWeight" min="300" max="900" step="100" value="900" class="w-full" oninput="updateFontWeightText(this.value); renderCanvas()">
+          </div>
+
+          <!-- Line Height Slider (Swiss Tight Leading) -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-zinc-400">
+              <span>紧密行高 (Line Height)</span>
+              <span id="lineHeightVal" class="font-mono text-zinc-200">0.90</span>
+            </div>
+            <input type="range" id="lineHeight" min="0.70" max="1.6" step="0.02" value="0.90" class="w-full" oninput="updateRangeVal('lineHeightVal', this.value); renderCanvas()">
+          </div>
+
+          <!-- Letter Spacing Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-zinc-400">
+              <span>字距紧凑度 (Letter Spacing)</span>
+              <span id="letterSpacingVal" class="font-mono text-zinc-200">-0.04em</span>
+            </div>
+            <input type="range" id="letterSpacing" min="-0.10" max="0.25" step="0.01" value="-0.04" class="w-full" oninput="updateRangeVal('letterSpacingVal', this.value + 'em'); renderCanvas()">
+          </div>
+
+          <!-- Alignments -->
+          <div class="grid grid-cols-2 gap-2.5 pt-1">
+            <div>
+              <span class="text-xs text-zinc-400 block mb-1">水平对齐</span>
+              <div class="flex border border-zinc-800 rounded bg-[#0E0E10] p-0.5 text-xs">
+                <button onclick="setTextAlign('left', this)" class="align-btn flex-1 py-1 rounded bg-zinc-700 text-white font-mono">左</button>
+                <button onclick="setTextAlign('center', this)" class="align-btn flex-1 py-1 rounded text-zinc-400 hover:text-white font-mono">中</button>
+                <button onclick="setTextAlign('right', this)" class="align-btn flex-1 py-1 rounded text-zinc-400 hover:text-white font-mono">右</button>
+              </div>
+            </div>
+            <div>
+              <span class="text-xs text-zinc-400 block mb-1">垂直位置</span>
+              <div class="flex border border-zinc-800 rounded bg-[#0E0E10] p-0.5 text-xs">
+                <button onclick="setValign('top', this)" class="valign-btn flex-1 py-1 rounded bg-zinc-700 text-white font-mono">顶</button>
+                <button onclick="setValign('middle', this)" class="valign-btn flex-1 py-1 rounded text-zinc-400 hover:text-white font-mono">居中</button>
+                <button onclick="setValign('bottom', this)" class="valign-btn flex-1 py-1 rounded text-zinc-400 hover:text-white font-mono">底</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 05 Padding & Colors -->
+        <section class="space-y-3.5 pt-3 border-t border-zinc-800/80">
+          <label class="font-mono text-[11px] tracking-wider text-zinc-400 font-semibold uppercase">05 / 留白边距与纸色</label>
+
+          <!-- Padding Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-zinc-400">
+              <span>四周边距 (Margin)</span>
+              <span id="paddingVal" class="font-mono text-zinc-200">11%</span>
+            </div>
+            <input type="range" id="paddingScale" min="4" max="25" value="11" class="w-full" oninput="updateRangeVal('paddingVal', this.value + '%'); renderCanvas()">
+          </div>
+
+          <!-- Color Presets -->
+          <div>
+            <span class="text-xs text-zinc-400 block mb-1.5">经典纸墨色系</span>
+            <div class="grid grid-cols-4 gap-1.5">
+              <button onclick="setPalette('#FFFFFF', '#050505')" class="p-2 rounded border border-zinc-700 bg-white hover:ring-2 hover:ring-white transition flex flex-col items-center">
+                <span class="text-xs font-black text-black">Aa</span>
+                <span class="text-[9px] text-zinc-600 font-mono">纯白</span>
+              </button>
+              <button onclick="setPalette('#F6F4EE', '#181816')" class="p-2 rounded border border-zinc-700 bg-[#F6F4EE] hover:ring-2 hover:ring-[#F6F4EE] transition flex flex-col items-center">
+                <span class="text-xs font-black text-[#181816]">Aa</span>
+                <span class="text-[9px] text-zinc-500 font-mono">米白纸</span>
+              </button>
+              <button onclick="setPalette('#0A0A0B', '#F5F5F7')" class="p-2 rounded border border-zinc-700 bg-[#0A0A0B] hover:ring-2 hover:ring-zinc-400 transition flex flex-col items-center">
+                <span class="text-xs font-black text-white">Aa</span>
+                <span class="text-[9px] text-zinc-400 font-mono">黑曜</span>
+              </button>
+              <button onclick="setPalette('#E53924', '#FFFFFF')" class="p-2 rounded border border-zinc-700 bg-[#E53924] hover:ring-2 hover:ring-[#E53924] transition flex flex-col items-center">
+                <span class="text-xs font-black text-white">Aa</span>
+                <span class="text-[9px] text-white/80 font-mono">包豪斯</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Color pickers -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center space-x-2 bg-[#0E0E10] p-1.5 border border-zinc-800 rounded">
+              <input type="color" id="bgColor" value="#FFFFFF" onchange="renderCanvas()" class="w-6 h-6 border-0 bg-transparent rounded cursor-pointer">
+              <div class="flex flex-col text-[11px]">
+                <span class="text-zinc-500">背景色</span>
+                <span id="bgColorHex" class="font-mono text-zinc-200">#FFFFFF</span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 bg-[#0E0E10] p-1.5 border border-zinc-800 rounded">
+              <input type="color" id="textColor" value="#050505" onchange="renderCanvas()" class="w-6 h-6 border-0 bg-transparent rounded cursor-pointer">
+              <div class="flex flex-col text-[11px]">
+                <span class="text-zinc-500">文字色</span>
+                <span id="textColorHex" class="font-mono text-zinc-200">#050505</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Realistic Spine Toggle -->
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-xs text-zinc-400">模拟装订书脊质感阴影</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="spineEffectToggle" onchange="toggleSpineEffect()" checked class="sr-only peer">
+              <div class="w-8 h-4 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-zinc-200"></div>
+            </label>
+          </div>
+        </section>
+
+        <!-- Extra bottom clearance inside scroll container so last item is never obscured -->
+        <div class="h-4"></div>
+      </div>
+
+      <!-- PINNED BOTTOM ACTIONS: Always visible, never cut off on Mac screens -->
+      <div class="flex-shrink-0 bg-[#121215] border-t border-zinc-800 p-3 lg:p-4 space-y-2 shadow-2xl z-30">
+        <div class="flex items-center justify-between text-[11px] font-mono text-zinc-400 mb-1">
+          <span>导出为轻量封面:</span>
+          <span id="estSizeBadge" class="text-emerald-400">预估 ~38 KB</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="exportImage('png')" class="py-2.5 bg-zinc-100 hover:bg-white text-zinc-950 font-bold rounded text-xs font-mono transition flex items-center justify-center space-x-1.5 shadow active:scale-[0.98]">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>下载 PNG</span>
+          </button>
+          <button onclick="exportImage('jpeg')" class="py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded text-xs font-mono transition flex items-center justify-center space-x-1.5 active:scale-[0.98]">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>下载轻量 JPG</span>
+          </button>
+        </div>
+        <button onclick="copyToClipboard()" class="w-full py-2 bg-zinc-900 border border-zinc-700/80 hover:border-zinc-500 text-zinc-300 font-mono text-xs rounded transition flex items-center justify-center space-x-2 active:scale-[0.98]">
+          <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+          <span>复制图片到剪贴板</span>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT PREVIEW STAGE: Auto-centers, never overflows, fits inside viewport -->
+    <main class="flex-1 flex flex-col min-w-0 min-h-0 bg-[#0A0A0C] relative overflow-hidden">
+      
+      <!-- Stage Subheader Bar with View Zoom Controls -->
+      <div class="h-10 px-4 md:px-6 border-b border-zinc-800/60 bg-[#0F0F12] flex items-center justify-between text-xs text-zinc-400 font-mono flex-shrink-0 z-10">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span class="text-zinc-300 hidden sm:inline">画布所见即所得</span>
+          <span id="canvasSummaryText" class="text-zinc-500">3:4 · PORTRAIT</span>
+        </div>
+
+        <!-- Mac Preview Zoom Buttons -->
+        <div class="flex items-center space-x-1 bg-zinc-900 border border-zinc-800 rounded px-1.5 py-0.5 text-[11px]">
+          <button onclick="setZoomMode('fit')" id="zoomFitBtn" class="px-2 py-0.5 rounded bg-zinc-700 text-white font-medium">适合窗口</button>
+          <button onclick="setZoomMode('actual')" id="zoomActualBtn" class="px-2 py-0.5 rounded text-zinc-400 hover:text-white">1:1 实点</button>
+        </div>
+      </div>
+
+      <!-- Visual Canvas Area: Padded, centered, and constrained without outer screen spill -->
+      <div id="canvasViewport" class="flex-1 min-h-0 min-w-0 p-4 sm:p-6 md:p-8 flex items-center justify-center overflow-auto mac-scrollbar relative">
+        
+        <!-- Canvas Mockup Card Container -->
+        <div id="canvasCard" class="relative realistic-shadow transition-all duration-200 rounded-[2px] overflow-hidden flex items-center justify-center" style="max-height: 100%; max-width: 100%;">
+          
+          <!-- Native HTML5 Canvas element: object-fit contain guarantees it never exceeds parent -->
+          <canvas id="coverCanvas" class="block max-h-full max-w-full object-contain cursor-default" style="max-height: calc(100vh - 120px); max-width: calc(100vw - 440px);"></canvas>
+          
+          <!-- Book Spine Realistic Texture Overlay -->
+          <div id="spineOverlay" class="absolute inset-y-0 left-0 w-7 pointer-events-none notebook-spine opacity-60"></div>
+        </div>
+
+      </div>
+
+      <!-- Quick Tips Bar at the bottom of Stage -->
+      <div class="h-8 border-t border-zinc-800/50 bg-[#0F0F12] px-4 md:px-6 flex items-center justify-between text-[11px] text-zinc-500 font-mono flex-shrink-0">
+        <span class="truncate">💡 提示：纯单文件纯代码 Canvas 渲染，不占 Mac 内存，小图适合当 Obsidian / Notion 封面</span>
+        <span id="ratioDesc" class="hidden md:inline text-zinc-400">3:4 笔记本比例</span>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Floating Toast Notification (replaces alert) -->
+  <div id="toast" class="fixed bottom-6 right-6 bg-zinc-900 border border-zinc-700 text-white px-4 py-2.5 rounded shadow-2xl font-mono text-xs flex items-center space-x-2.5 opacity-0 pointer-events-none transition-all duration-300 transform translate-y-3 z-50">
+    <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    <span id="toastMsg">已完成操作</span>
+  </div>
+
+  <script>
+    // State store
+    const state = {
+      text: "In design,\nthinking\nwrong\nis right.",
+      cornerText: "Base",
+      cornerPosition: "bottom-right", // bottom-right, bottom-left, top-right, top-left, none
+      cornerRotation: "vertical",     // vertical (-90deg), horizontal
+      aspectRatio: 0.75,              // width / height (3:4 = 0.75)
+      orientation: "portrait",        // portrait | landscape
+      resolutionBase: 600,            // base dimension for lightweight covers
+      fontFamily: "Inter, sans-serif",
+      fontSizeScale: 105,
+      fontWeight: 900,
+      lineHeight: 0.90,
+      letterSpacing: -0.04,
+      textAlign: "left",
+      verticalAlign: "top",
+      paddingScale: 11,
+      bgColor: "#FFFFFF",
+      textColor: "#050505",
+      showSpine: true,
+      zoomMode: "fit"                 // fit | actual
+    };
+
+    // Canvas DOM & Context
+    const canvas = document.getElementById('coverCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI References
+    const mainTextEl = document.getElementById('mainText');
+    const cornerTextEl = document.getElementById('cornerText');
+    const cornerPositionEl = document.getElementById('cornerPosition');
+    const fontFamilyEl = document.getElementById('fontFamily');
+    const fontSizeScaleEl = document.getElementById('fontSizeScale');
+    const fontWeightEl = document.getElementById('fontWeight');
+    const lineHeightEl = document.getElementById('lineHeight');
+    const letterSpacingEl = document.getElementById('letterSpacing');
+    const paddingScaleEl = document.getElementById('paddingScale');
+    const exportResolutionEl = document.getElementById('exportResolution');
+    const bgColorEl = document.getElementById('bgColor');
+    const textColorEl = document.getElementById('textColor');
+    const spineOverlay = document.getElementById('spineOverlay');
+
+    // Event Bindings
+    mainTextEl.addEventListener('input', (e) => {
+      state.text = e.target.value;
+      renderCanvas();
+    });
+
+    cornerTextEl.addEventListener('input', (e) => {
+      state.cornerText = e.target.value;
+      renderCanvas();
+    });
+
+    cornerPositionEl.addEventListener('change', (e) => {
+      state.cornerPosition = e.target.value;
+      renderCanvas();
+    });
+
+    function updateRangeVal(elementId, val) {
+      document.getElementById(elementId).innerText = val;
+    }
+
+    function updateFontWeightText(val) {
+      const names = {
+        '300': '300 (Light)',
+        '400': '400 (Regular)',
+        '500': '500 (Medium)',
+        '600': '600 (SemiBold)',
+        '700': '700 (Bold)',
+        '800': '800 (ExtraBold)',
+        '900': '900 (Ultra Black)'
+      };
+      document.getElementById('fontWeightVal').innerText = names[val] || val;
+    }
+
+    function clearText() {
+      mainTextEl.value = '';
+      state.text = '';
+      renderCanvas();
+    }
+
+    function setRatio(ratio, btn) {
+      state.aspectRatio = ratio;
+      document.querySelectorAll('.ratio-btn').forEach(b => {
+        b.className = 'ratio-btn py-1.5 rounded bg-zinc-900 text-zinc-300 border border-zinc-800 hover:border-zinc-600';
+      });
+      if (btn) {
+        btn.className = 'ratio-btn py-1.5 rounded bg-zinc-200 text-zinc-950 font-bold border border-zinc-300';
+      }
+      renderCanvas();
+    }
+
+    function setOrientation(orient) {
+      state.orientation = orient;
+      const btnP = document.getElementById('btnPortrait');
+      const btnL = document.getElementById('btnLandscape');
+      if (orient === 'portrait') {
+        btnP.className = "flex-1 py-1 text-xs rounded bg-zinc-700 text-white font-medium";
+        btnL.className = "flex-1 py-1 text-xs rounded text-zinc-400 hover:text-white font-medium";
+      } else {
+        btnL.className = "flex-1 py-1 text-xs rounded bg-zinc-700 text-white font-medium";
+        btnP.className = "flex-1 py-1 text-xs rounded text-zinc-400 hover:text-white font-medium";
+      }
+      renderCanvas();
+    }
+
+    function setCornerRotation(rot) {
+      state.cornerRotation = rot;
+      const btnV = document.getElementById('cornerRot_vertical');
+      const btnH = document.getElementById('cornerRot_horizontal');
+      if (rot === 'vertical') {
+        btnV.className = "px-2 py-1 rounded border border-zinc-600 bg-zinc-700 text-white text-[11px]";
+        btnH.className = "px-2 py-1 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 text-[11px]";
+      } else {
+        btnH.className = "px-2 py-1 rounded border border-zinc-600 bg-zinc-700 text-white text-[11px]";
+        btnV.className = "px-2 py-1 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 text-[11px]";
+      }
+      renderCanvas();
+    }
+
+    function setTextAlign(align, el) {
+      state.textAlign = align;
+      document.querySelectorAll('.align-btn').forEach(b => {
+        b.className = "align-btn flex-1 py-1 rounded text-zinc-400 hover:text-white font-mono";
+      });
+      el.className = "align-btn flex-1 py-1 rounded bg-zinc-700 text-white font-mono";
+      renderCanvas();
+    }
+
+    function setValign(valign, el) {
+      state.verticalAlign = valign;
+      document.querySelectorAll('.valign-btn').forEach(b => {
+        b.className = "valign-btn flex-1 py-1 rounded text-zinc-400 hover:text-white font-mono";
+      });
+      el.className = "valign-btn flex-1 py-1 rounded bg-zinc-700 text-white font-mono";
+      renderCanvas();
+    }
+
+    function setPalette(bg, text) {
+      state.bgColor = bg;
+      state.textColor = text;
+      bgColorEl.value = bg;
+      textColorEl.value = text;
+      document.getElementById('bgColorHex').innerText = bg.toUpperCase();
+      document.getElementById('textColorHex').innerText = text.toUpperCase();
+      renderCanvas();
+    }
+
+    function toggleSpineEffect() {
+      const isChecked = document.getElementById('spineEffectToggle').checked;
+      state.showSpine = isChecked;
+      spineOverlay.style.display = isChecked ? 'block' : 'none';
+    }
+
+    // Zoom controller for Mac screen sizes
+    function setZoomMode(mode) {
+      state.zoomMode = mode;
+      const fitBtn = document.getElementById('zoomFitBtn');
+      const actBtn = document.getElementById('zoomActualBtn');
+      const card = document.getElementById('canvasCard');
+
+      if (mode === 'fit') {
+        fitBtn.className = "px-2 py-0.5 rounded bg-zinc-700 text-white font-medium";
+        actBtn.className = "px-2 py-0.5 rounded text-zinc-400 hover:text-white";
+        canvas.style.maxHeight = "calc(100vh - 120px)";
+        canvas.style.maxWidth = "calc(100vw - 440px)";
+        canvas.style.width = "auto";
+        canvas.style.height = "auto";
+      } else {
+        actBtn.className = "px-2 py-0.5 rounded bg-zinc-700 text-white font-medium";
+        fitBtn.className = "px-2 py-0.5 rounded text-zinc-400 hover:text-white";
+        canvas.style.maxHeight = "none";
+        canvas.style.maxWidth = "none";
+        canvas.style.width = `${canvas.width}px`;
+        canvas.style.height = `${canvas.height}px`;
+      }
+    }
+
+    function computeDimensions() {
+      const base = parseInt(exportResolutionEl.value, 10) || 600;
+      let w, h;
+      const r = state.aspectRatio;
+
+      if (state.orientation === 'portrait') {
+        h = base;
+        w = Math.round(base * r);
+      } else {
+        w = base;
+        h = Math.round(base * r);
+      }
+
+      // Ensure even pixels
+      w = w % 2 === 0 ? w : w + 1;
+      h = h % 2 === 0 ? h : h + 1;
+
+      return { width: w, height: h };
+    }
+
+    function renderCanvas() {
+      // 1. Sync control inputs
+      state.fontFamily = fontFamilyEl.value;
+      state.fontSizeScale = parseInt(fontSizeScaleEl.value, 10);
+      state.fontWeight = parseInt(fontWeightEl.value, 10);
+      state.lineHeight = parseFloat(lineHeightEl.value);
+      state.letterSpacing = parseFloat(letterSpacingEl.value);
+      state.paddingScale = parseInt(paddingScaleEl.value, 10);
+      state.bgColor = bgColorEl.value;
+      state.textColor = textColorEl.value;
+
+      document.getElementById('bgColorHex').innerText = state.bgColor.toUpperCase();
+      document.getElementById('textColorHex').innerText = state.textColor.toUpperCase();
+
+      // 2. Set Canvas size
+      const { width, height } = computeDimensions();
+      canvas.width = width;
+      canvas.height = height;
+
+      // Update resolution and size badge
+      document.getElementById('badgePixelSize').innerText = `${width} × ${height} px`;
+      document.getElementById('canvasSummaryText').innerText = `${width} × ${height} · ${state.orientation.toUpperCase()}`;
+      
+      // Calculate realistic lightweight estimate
+      const estKB = Math.round((width * height * 0.08) / 1024);
+      document.getElementById('estSizeBadge').innerText = `预估 ~${Math.max(15, estKB)} KB (极轻量)`;
+
+      // Apply zoom style if in actual mode
+      if (state.zoomMode === 'actual') {
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+      }
+
+      // 3. Clear and draw background
+      ctx.fillStyle = state.bgColor;
+      ctx.fillRect(0, 0, width, height);
+
+      // Micro tactile paper noise (pure code, zero external images)
+      drawPaperNoise(width, height);
+
+      // 4. Margins
+      const pad = Math.round(Math.min(width, height) * (state.paddingScale / 100));
+      const availWidth = width - pad * 2;
+      const availHeight = height - pad * 2;
+
+      // 5. Typography sizing
+      const baseFontSize = (width / 7.2) * (state.fontSizeScale / 100);
+      const computedFontSize = Math.max(10, Math.round(baseFontSize));
+      const computedLineHeight = computedFontSize * state.lineHeight;
+
+      // Setup typography context
+      ctx.font = `${state.fontWeight} ${computedFontSize}px ${state.fontFamily}`;
+      if ('letterSpacing' in ctx) {
+        ctx.letterSpacing = `${state.letterSpacing}em`;
+      }
+
+      // 6. Multiline and CJK aware text wrapping
+      const rawLines = state.text.split('\n');
+      const lines = [];
+
+      for (let i = 0; i < rawLines.length; i++) {
+        const paragraph = rawLines[i];
+        if (paragraph.trim() === '') {
+          lines.push('');
+          continue;
+        }
+
+        const hasSpaces = paragraph.includes(' ');
+        if (hasSpaces) {
+          const words = paragraph.split(' ');
+          let currentLine = words[0];
+
+          for (let wIdx = 1; wIdx < words.length; wIdx++) {
+            const word = words[wIdx];
+            const testLine = currentLine + " " + word;
+            if (ctx.measureText(testLine).width > availWidth && currentLine.length > 0) {
+              lines.push(currentLine);
+              currentLine = word;
+            } else {
+              currentLine = testLine;
+            }
+          }
+          lines.push(currentLine);
+        } else {
+          let currentLine = '';
+          for (let char of paragraph) {
+            const testLine = currentLine + char;
+            if (ctx.measureText(testLine).width > availWidth && currentLine.length > 0) {
+              lines.push(currentLine);
+              currentLine = char;
+            } else {
+              currentLine = testLine;
+            }
+          }
+          lines.push(currentLine);
+        }
+      }
+
+      // 7. Vertical Anchor Calculation
+      const totalTextHeight = (lines.length - 1) * computedLineHeight + computedFontSize;
+
+      let startY;
+      if (state.verticalAlign === 'top') {
+        startY = pad + computedFontSize * 0.88;
+      } else if (state.verticalAlign === 'middle') {
+        startY = pad + (availHeight - totalTextHeight) / 2 + computedFontSize * 0.88;
+      } else {
+        startY = height - pad - totalTextHeight + computedFontSize * 0.88;
+      }
+
+      // 8. Horizontal Anchor Calculation
+      ctx.fillStyle = state.textColor;
+      ctx.textAlign = state.textAlign;
+
+      let anchorX;
+      if (state.textAlign === 'left') {
+        anchorX = pad;
+      } else if (state.textAlign === 'center') {
+        anchorX = width / 2;
+      } else {
+        anchorX = width - pad;
+      }
+
+      // Render main text lines
+      lines.forEach((line, idx) => {
+        const y = startY + idx * computedLineHeight;
+        ctx.fillText(line, anchorX, y);
+      });
+
+      // 9. Draw Corner Micro Badge
+      if (state.cornerPosition !== 'none' && state.cornerText.trim() !== '') {
+        drawCornerBadge(width, height, pad);
+      }
+    }
+
+    // Tactile fine paper noise for subtle Swiss book texture
+    function drawPaperNoise(w, h) {
+      ctx.save();
+      ctx.fillStyle = '#000000';
+      ctx.globalAlpha = 0.012;
+      const count = (w * h) / 130;
+      for (let i = 0; i < count; i++) {
+        ctx.fillRect(Math.random() * w, Math.random() * h, 1, 1);
+      }
+      ctx.restore();
+    }
+
+    // Corner badge drawing with precision orientation
+    function drawCornerBadge(w, h, pad) {
+      const tagText = state.cornerText;
+      const tagFontSize = Math.max(9, Math.round(w / 38));
+
+      ctx.save();
+      ctx.font = `700 ${tagFontSize}px 'Space Grotesk', Inter, sans-serif`;
+      ctx.fillStyle = state.textColor;
+      if ('letterSpacing' in ctx) {
+        ctx.letterSpacing = '0.04em';
+      }
+
+      const isRotated = state.cornerRotation === 'vertical';
+
+      if (state.cornerPosition === 'bottom-right') {
+        const x = w - pad;
+        const y = h - pad;
+        if (isRotated) {
+          ctx.translate(x, y);
+          ctx.rotate(-Math.PI / 2);
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(tagText, 0, 0);
+        } else {
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(tagText, x, y);
+        }
+      } else if (state.cornerPosition === 'bottom-left') {
+        const x = pad;
+        const y = h - pad;
+        if (isRotated) {
+          ctx.translate(x, y);
+          ctx.rotate(-Math.PI / 2);
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(tagText, 0, 0);
+        } else {
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(tagText, x, y);
+        }
+      } else if (state.cornerPosition === 'top-right') {
+        const x = w - pad;
+        const y = pad;
+        if (isRotated) {
+          ctx.translate(x, y);
+          ctx.rotate(Math.PI / 2);
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(tagText, 0, 0);
+        } else {
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'top';
+          ctx.fillText(tagText, x, y);
+        }
+      } else if (state.cornerPosition === 'top-left') {
+        const x = pad;
+        const y = pad;
+        if (isRotated) {
+          ctx.translate(x, y);
+          ctx.rotate(Math.PI / 2);
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(tagText, 0, 0);
+        } else {
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(tagText, x, y);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function applyPreset(name) {
+      if (name === 'reference') {
+        mainTextEl.value = "In design,\nthinking\nwrong\nis right.";
+        cornerTextEl.value = "Base";
+        cornerPositionEl.value = "bottom-right";
+        setCornerRotation('vertical');
+        fontFamilyEl.value = "Inter, sans-serif";
+        fontSizeScaleEl.value = 105;
+        fontWeightEl.value = 900;
+        lineHeightEl.value = 0.90;
+        letterSpacingEl.value = -0.04;
+        paddingScaleEl.value = 11;
+        setTextAlign('left', document.querySelectorAll('.align-btn')[0]);
+        setValign('top', document.querySelectorAll('.valign-btn')[0]);
+        setPalette('#FFFFFF', '#050505');
+        setRatio(0.75, document.querySelectorAll('.ratio-btn')[0]);
+        setOrientation('portrait');
+      } else if (name === 'notebookA5') {
+        mainTextEl.value = "無印の記録\nDAILY NOTES\n2026";
+        cornerTextEl.value = "VOL. 01";
+        cornerPositionEl.value = "bottom-right";
+        setCornerRotation('horizontal');
+        fontFamilyEl.value = "'Noto Serif SC', serif";
+        fontSizeScaleEl.value = 92;
+        fontWeightEl.value = 700;
+        lineHeightEl.value = 1.05;
+        letterSpacingEl.value = 0.02;
+        paddingScaleEl.value = 13;
+        setTextAlign('left', document.querySelectorAll('.align-btn')[0]);
+        setValign('top', document.querySelectorAll('.valign-btn')[0]);
+        setPalette('#F6F4EE', '#181816');
+        setRatio(0.707, document.querySelectorAll('.ratio-btn')[2]);
+        setOrientation('portrait');
+      } else if (name === 'notionArchive') {
+        mainTextEl.value = "DEV_LOG\nSYSTEM\nARCHIVE.";
+        cornerTextEl.value = "#OBSIDIAN";
+        cornerPositionEl.value = "bottom-left";
+        setCornerRotation('horizontal');
+        fontFamilyEl.value = "'Space Mono', monospace";
+        fontSizeScaleEl.value = 82;
+        fontWeightEl.value = 700;
+        lineHeightEl.value = 1.15;
+        letterSpacingEl.value = -0.02;
+        paddingScaleEl.value = 10;
+        setTextAlign('left', document.querySelectorAll('.align-btn')[0]);
+        setValign('middle', document.querySelectorAll('.valign-btn')[1]);
+        setPalette('#0A0A0B', '#F5F5F7');
+        setRatio(0.75, document.querySelectorAll('.ratio-btn')[0]);
+        setOrientation('portrait');
+      } else if (name === 'bauhausCrimson') {
+        mainTextEl.value = "LESS\nBUT\nBETTER.";
+        cornerTextEl.value = "SWISS 1960";
+        cornerPositionEl.value = "top-right";
+        setCornerRotation('vertical');
+        fontFamilyEl.value = "'Space Grotesk', sans-serif";
+        fontSizeScaleEl.value = 135;
+        fontWeightEl.value = 800;
+        lineHeightEl.value = 0.85;
+        letterSpacingEl.value = -0.05;
+        paddingScaleEl.value = 12;
+        setTextAlign('left', document.querySelectorAll('.align-btn')[0]);
+        setValign('bottom', document.querySelectorAll('.valign-btn')[2]);
+        setPalette('#E53924', '#FFFFFF');
+        setRatio(0.8, document.querySelectorAll('.ratio-btn')[4]);
+        setOrientation('portrait');
+      }
+
+      // Sync state and UI
+      state.text = mainTextEl.value;
+      state.cornerText = cornerTextEl.value;
+      updateRangeVal('fontSizeVal', fontSizeScaleEl.value + '%');
+      updateFontWeightText(fontWeightEl.value);
+      updateRangeVal('lineHeightVal', lineHeightEl.value);
+      updateRangeVal('letterSpacingVal', letterSpacingEl.value + 'em');
+      updateRangeVal('paddingVal', paddingScaleEl.value + '%');
+
+      showToast('已加载预设版式');
+      renderCanvas();
+    }
+
+    function exportImage(format) {
+      try {
+        const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+        const ext = format === 'jpeg' ? 'jpg' : 'png';
+        const quality = format === 'jpeg' ? 0.90 : undefined;
+        const dataUrl = canvas.toDataURL(mimeType, quality);
+
+        const link = document.createElement('a');
+        const timestamp = new Date().toISOString().slice(0, 10);
+        link.download = `swiss-cover-${timestamp}.${ext}`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast(`已成功保存 ${ext.toUpperCase()} 封面！`);
+      } catch (err) {
+        showToast('导出出错，请检查下载设置');
+      }
+    }
+
+    async function copyToClipboard() {
+      try {
+        if (!navigator.clipboard || !window.ClipboardItem) {
+          showToast('当前浏览器环境不支持直接复制图片，请使用直接下载');
+          return;
+        }
+
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            showToast('生成图片数据失败');
+            return;
+          }
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+            showToast('已将图片复制到剪贴板！可以直接粘贴到笔记中');
+          } catch (err) {
+            showToast('剪贴板权限受限，请使用直接下载');
+          }
+        }, 'image/png');
+      } catch (e) {
+        showToast('剪贴板受限，请使用直接下载');
+      }
+    }
+
+    // Custom Toast
+    let toastTimer;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.innerText = msg;
+
+      toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+      }, 2400);
+    }
+
+    // Lifecycle
+    window.addEventListener('DOMContentLoaded', () => {
+      if (document.fonts) {
+        document.fonts.ready.then(() => renderCanvas());
+      } else {
+        setTimeout(renderCanvas, 250);
+      }
+    });
+
+    // Window resize observer
+    window.addEventListener('resize', () => {
+      renderCanvas();
+    });
+  </script>
+</body>
+</html>
